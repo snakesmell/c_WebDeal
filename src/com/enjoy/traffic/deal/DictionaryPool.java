@@ -41,23 +41,94 @@ public class DictionaryPool {
 		this.map = map;
 	}
 
-	//号牌类型
-	public static final String com_hplx="com_hplx";
-	//方向编号
-	public static final String com_cdfx="com_cdfx";
+	public static final String BLACKLIST="BLACKLIST";
+	public static final String Black_alert_device="black_alert_device";
+	public static final String bkl_bkjb="bkl_bkjb";//布控级别
+	public static final String bkl_bklx="bkl_bklx";//黑名单布控类型
+	public static final String com_cdfx="com_cdfx";//方向
+	public static final String com_cbbh="com_cbbh";//车标
+	public static final String com_cllx="com_cllx";//车辆类型
+	public static final String com_hplx="com_hplx";//号牌类型
+	public static final String com_csys="com_csys";//车身颜色
+	public static final String com_cdbh="com_cdbh";//车道编号
+	public static final String eqp_type="eqp_type";//数据来源
+	public static final String bkl_all_area="bkl_all_area";//全局作用域
+	public static final String bkl_status="bkl_status";//状态控制
 	@PostConstruct
 	public void initDictionaryPool(){	
 		try{//共简化4个 clear标识
-			//号牌类型
-			String sql=" select * from	sys_dict where type='com_hplx' ";
+			//黑名单车辆 CARNO
+			String sql=" select * from BLACKLIST t ";
 			List<Map<String,Object>> list= dataBaseDao.executeQuery(sql);	
-			map.put(com_hplx,list);
-			mapSql.put(com_hplx,sql);
+			map.put(BLACKLIST,list);
+			mapSql.put(BLACKLIST,sql);
+			//卡口点位 DEVICENAME DEVICECODE
+			sql=" select * from black_alert_device ";
+			list= dataBaseDao.executeQuery(sql);
+			map.put(Black_alert_device,list);	
+			mapSql.put(Black_alert_device,sql);
+			//布控级别
+			sql=" select * from SYS_DICT where type='bkl_bkjb' ";
+			list= dataBaseDao.executeQuery(sql);
+			map.put(bkl_bkjb,list);	
+			mapSql.put(bkl_bkjb,sql);
+			//黑名单布控类型
+			sql=" select * from SYS_DICT where type='bkl_bklx' ";
+			list= dataBaseDao.executeQuery(sql);
+			map.put(bkl_bklx,list);	
+			mapSql.put(bkl_bklx,sql);
 			//方向
-			sql=" select * from	sys_dict where type='com_cdfx' ";
+			sql=" select * from SYS_DICT where type='com_cdfx' ";
 			list= dataBaseDao.executeQuery(sql);
 			map.put(com_cdfx,list);	
 			mapSql.put(com_cdfx,sql);
+			//车标
+			sql=" select * from SYS_DICT where type='com_cbbh' ";
+			list= dataBaseDao.executeQuery(sql);
+			map.put(com_cbbh,list);	
+			mapSql.put(com_cbbh,sql);
+			//车辆类型
+			sql=" select * from SYS_DICT where type='com_cllx' ";
+			list= dataBaseDao.executeQuery(sql);
+			map.put(com_cllx,list);	
+			mapSql.put(com_cllx,sql);
+			//布控级别
+			sql=" select * from SYS_DICT where type='bkl_bkjb' ";
+			list= dataBaseDao.executeQuery(sql);
+			map.put(bkl_bkjb,list);	
+			mapSql.put(bkl_bkjb,sql);
+			//号牌类型
+			sql=" select * from SYS_DICT where type='com_hplx' ";
+			list= dataBaseDao.executeQuery(sql);
+			map.put(com_hplx,list);	
+			mapSql.put(com_hplx,sql);
+			//车身颜色
+			sql=" select * from SYS_DICT where type='com_csys' ";
+			list= dataBaseDao.executeQuery(sql);
+			map.put(com_csys,list);	
+			mapSql.put(com_csys,sql);
+			//车道编号
+			sql=" select * from SYS_DICT where type='com_cdbh' ";
+			list= dataBaseDao.executeQuery(sql);
+			map.put(com_cdbh,list);	
+			mapSql.put(com_cdbh,sql);
+			//数据来源
+			sql=" select * from SYS_DICT where type='eqp_type' ";
+			list= dataBaseDao.executeQuery(sql);
+			map.put(eqp_type,list);	
+			mapSql.put(eqp_type,sql);
+			//全区域控制
+			sql=" select * from SYS_DICT a where a.type='bkl_all_area' ";
+			list= dataBaseDao.executeQuery(sql);
+			map.put(bkl_all_area,list);	
+			mapSql.put(bkl_all_area,sql);
+			//布控状态
+			sql=" select * from SYS_DICT a where a.type='bkl_status' ";
+			list= dataBaseDao.executeQuery(sql);
+			map.put(bkl_status,list);	
+			mapSql.put(bkl_status,sql);
+			
+			System.out.println("字典数据加载...");
 		}		
 		catch(Exception e){
 			e.printStackTrace();
@@ -69,29 +140,16 @@ public class DictionaryPool {
 	 * @param tableName
 	 * @param sql
 	 */
-	public static String TABLE_BMD="";
-	public static String TABLE_JCBK="";
-	public static String TABLE_WHITE="";
 	public synchronized void resetTable(){
-			String []tables={TABLE_BMD,TABLE_JCBK};
-//			int m = Calendar.getInstance().get(Calendar.MINUTE);//整型
-//			float m_f=Float.parseFloat(String.valueOf(m));//浮点型
-//			if(m/2==m_f/2){//偶数时计算
-//				if(m>m_v){
-//					Logger.getRootLogger().info(m+",begin:query");
-		    Logger.getRootLogger().info("dictionary begin query...");
-			for(int i=0;i<tables.length;i++){
-				String s=String.valueOf(mapSql.get(tables[i]));
-				List list = dataBaseDao.executeQuery(s);
-				//System.out.println(s);
-				map.put(tables[i], list);
-			}
-//				}
-//				m_v=m+1;
-//			}
-//			if(m==1){//m=60 mv_v=61 ,recycle m=1 
-//				m_v=0;	
-//			}
+		String []tables={BLACKLIST,Black_alert_device,bkl_all_area,bkl_status};
+	    Logger.getRootLogger().info("dictionary begin query...");
+		for(int i=0;i<tables.length;i++){
+			String s=String.valueOf(mapSql.get(tables[i]));
+			List list = dataBaseDao.executeQuery(s);
+			//System.out.println(s);
+//			System.out.println(list);
+			map.put(tables[i], list);
+		}
 	}
 	
 	/**

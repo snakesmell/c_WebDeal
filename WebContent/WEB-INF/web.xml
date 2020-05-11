@@ -9,18 +9,14 @@
     <welcome-file>default.htm</welcome-file>
     <welcome-file>default.jsp</welcome-file>
   </welcome-file-list>
-	<context-param>
-	    <param-name>contextConfigLocation</param-name>
-	    <param-value>classpath:applicationContext.xml</param-value>
-    </context-param>
-	<listener>
-    	<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
-    </listener>
-    <listener>
-            <listener-class>com.enjoy.traffic.util.ServerStart</listener-class>
-    </listener>
+  <context-param>
+    <param-name>contextConfigLocation</param-name>
+    <param-value>classpath:applicationContext.xml</param-value>
+  </context-param>
+  <listener>
+    <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+  </listener>
+  <listener>
+    <listener-class>com.enjoy.traffic.util.ServerStart</listener-class>
+  </listener>
 </web-app>
-
-
-
-
