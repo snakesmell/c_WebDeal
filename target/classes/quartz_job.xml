@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quartz>
+<job>
+	<job-detail>
+		<name>InfoService_job</name>
+		<group>InfoServicejob</group>
+		<job-class>com.enjoy.traffic.deal.DictionaryPool</job-class>
+	</job-detail>
+	<trigger>
+		<cron>
+			<name>tigr_InfoService_job</name>
+			<group>tigr_InfoServicejob</group>
+			<job-name>InfoService_job</job-name>
+			<job-group>InfoServicejob</job-group>
+			<cron-expression>0/1 * * * * ?</cron-expression> 
+		</cron>
+	</trigger>
+</job> 
+</quartz>

@@ -1,0 +1,16 @@
+### set log levels ### ,file
+log4j.rootLogger = info,stdout,D,E
+### cosole show ###
+log4j.appender.stdout = org.apache.log4j.ConsoleAppender
+log4j.appender.stdout.Target = System.out
+log4j.appender.stdout.layout = org.apache.log4j.PatternLayout
+
+#log4j.appender.stdout.layout.ConversionPattern =  %d{ABSOLUTE} %5p %c{ 1 }:%L - %m%n
+log4j.appender.file = org.apache.log4j.FileAppender
+log4j.appender.file.File = E://logs/info.log
+log4j.appender.file.Encoding=UTF-8
+log4j.appender.file.name = fileLogDemo
+log4j.appender.file.Threshold= info
+log4j.appender.file.layout=org.apache.log4j.PatternLayout
+log4j.appender.file.layout.ConversionPattern=%-d{yyyy-MM-dd HH:mm:ss}[ %p ]%m%n
+log4j.appender.file.append = true

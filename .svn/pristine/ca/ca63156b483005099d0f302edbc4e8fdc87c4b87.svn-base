@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans
+	xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context-4.0.xsd">
+	
+	<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+		<property name="DriverClassName" value="oracle.jdbc.driver.OracleDriver" />
+		<property name="Url" value="jdbc:oracle:thin:@192.168.10.224:1521:MCSJT" />
+		<property name="Username" value="ITMSJZ" />
+		<property name="Password" value="ITMSJZ" />
+		 <!-- 配置初始化大小、最小、最大 -->
+        <property name="initialSize" value="80" />
+        <property name="minIdle" value="100" />
+        <property name="maxActive" value="500" />
+        <!-- 配置监控统计拦截的filters, 监控统计："stat",防SQL注入："wall",组合使用： "stat,wall" -->
+		<property name="Filters" value="stat" />
+		<!-- 配置一个连接在池中最小生存的时间，单位是毫秒 -->
+        <property name="minEvictableIdleTimeMillis" value="300000" />
+		<!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒 -->
+		<property name="TimeBetweenEvictionRunsMillis" value="60000" />
+		 <!-- 打开PSCache，并且指定每个连接上PSCache的大小 SQL预编译 -->
+        <property name="poolPreparedStatements" value="true" />
+        <property name="maxPoolPreparedStatementPerConnectionSize" value="500" />
+		<!-- 连接泄漏处理。Druid提供了RemoveAbandanded相关配置，用来关闭长时间不使用的连接（例如忘记关闭连接）。 -->
+        <property name="removeAbandoned" value="true" />
+        <!-- 1800秒，也就是30分钟 -->
+        <property name="removeAbandonedTimeout" value="1800" />
+        <!-- 关闭abanded连接时输出错误日志 -->
+        <property name="logAbandoned" value="true" />
+    </bean>   
+    
+    <bean id="dataSource2" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+		<property name="DriverClassName" value="oracle.jdbc.driver.OracleDriver" />
+		<property name="Url" value="jdbc:oracle:thin:@192.168.10.224:1521:MCSJT2" />
+		<property name="Username" value="ITMSJZ2" />
+		<property name="Password" value="ITMSJZ2" />
+		 <!-- 配置初始化大小、最小、最大 -->
+        <property name="initialSize" value="80" />
+        <property name="minIdle" value="100" />
+        <property name="maxActive" value="500" />
+        <!-- 配置监控统计拦截的filters, 监控统计："stat",防SQL注入："wall",组合使用： "stat,wall" -->
+		<property name="Filters" value="stat" />
+		<!-- 配置一个连接在池中最小生存的时间，单位是毫秒 -->
+        <property name="minEvictableIdleTimeMillis" value="300000" />
+		<!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒 -->
+		<property name="TimeBetweenEvictionRunsMillis" value="60000" />
+		 <!-- 打开PSCache，并且指定每个连接上PSCache的大小 SQL预编译 -->
+        <property name="poolPreparedStatements" value="true" />
+        <property name="maxPoolPreparedStatementPerConnectionSize" value="500" />
+		<!-- 连接泄漏处理。Druid提供了RemoveAbandanded相关配置，用来关闭长时间不使用的连接（例如忘记关闭连接）。 -->
+        <property name="removeAbandoned" value="true" />
+        <!-- 1800秒，也就是30分钟 -->
+        <property name="removeAbandonedTimeout" value="1800" />
+        <!-- 关闭abanded连接时输出错误日志 -->
+        <property name="logAbandoned" value="true" />
+    </bean>    
+    <!-- <bean id="sessionFactory" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean"> -->
+	<bean id="sessionFactory" class="org.springframework.orm.hibernate3.LocalSessionFactoryBean">
+ 		<property name="dataSource">
+			<ref bean="dataSource" />
+		</property>
+		<property name="configLocation" value="classpath:hibernate.cfg.xml" />
+	</bean>
+		<bean id="sessionFactory2" class="org.springframework.orm.hibernate3.LocalSessionFactoryBean">
+ 		<property name="dataSource">
+			<ref bean="dataSource2" />
+		</property>
+		<property name="configLocation" value="classpath:hibernate.cfg.xml" />
+	</bean>
+	<context:component-scan base-package="com.enjoy.traffic"></context:component-scan>
+	<!-- ======================== 任务 Task配置 ======================== --> 
+	<!--由MethodInvokingJobDetailFactoryBean实现-->
+	    <!-- 过车表生成定时任务 -->
+	    <bean id="waterJob" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+	        <property name="targetObject" ref="dictionaryPool" />         
+	        <property name="targetMethod" value="resetTable" />                  
+	        <property name="concurrent" value="false" />
+	        <property name="arguments">
+	            <list></list>
+	        </property>
+	    </bean> 
+	<!-- ======================== 配置定时调度 触发器 ======================== -->
+	<!--由CronTriggerFactoryBean实现-->
+	    <bean id="waterTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean"> 
+	        <property name="jobDetail" ref="waterJob" />                 
+	        <property name="cronExpression" value="0 0/1 * * * ?" />         
+	    </bean> 
+	 <!-- ======================== 调度工厂（中心调度器） ======================== -->
+	     <bean id="schedulerFactoryBean" class="org.springframework.scheduling.quartz.SchedulerFactoryBean"
+	        autowire="no">
+	        <property name="triggers">
+	            <list>
+	                <ref bean="waterTrigger" />
+	            </list>
+	        </property>
+	    </bean> 
+</beans>

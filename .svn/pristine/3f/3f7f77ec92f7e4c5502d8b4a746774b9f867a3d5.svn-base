@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE hibernate-configuration PUBLIC
+          "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+          "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+	<session-factory>
+	<!-- 方言 -->
+<!-- 	<property name="dialect">org.hibernate.dialect.Oracle9Dialect</property>
+ 	<property name="connection.driver_class">oracle.jdbc.driver.OracleDriver</property>
+	<property name="connection.url">jdbc:oracle:thin:@192.168.10.224:1521:MCSJT</property>
+    <property name="connection.username">MCS_JT</property>
+    <property name="connection.password">MCS_JT</property> -->
+    <!-- 设置是否显示SQL语句-->
+    <property name="show_sql">false</property>
+    <!-- 设置是否格式化SQL语句 -->
+    <property name="format_sql">false</property>
+    <!-- 设置使用线程-->
+    <property name="current_session_context_class">thread</property>
+	<!-- <mapping resource="hibernate/vo/user.xml"/> -->
+	</session-factory>
+</hibernate-configuration>

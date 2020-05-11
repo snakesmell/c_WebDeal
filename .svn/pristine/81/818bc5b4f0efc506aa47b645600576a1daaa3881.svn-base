@@ -1,0 +1,200 @@
+package com.enjoy.traffic.deal;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageConsumer;
+import javax.jms.MessageListener;
+import javax.jms.TextMessage;
+
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.json.simple.JSONValue;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.enjoy.traffic.dao.DataBaseDao;
+import com.enjoy.traffic.util.Common;
+import com.enjoy.traffic.util.MqHelper;
+import com.enjoy.traffic.util.TopicFactory;
+
+@Component("flowDeal")
+public class FlowDeal implements Runnable{
+	public FlowDeal() {
+		Logger.getRootLogger().info("flowDeal init");
+	}
+	private final Logger logger= LogManager.getLogger(this.getClass());
+	@Autowired
+	public DictionaryPool dictionaryPool;
+	@Autowired
+	private DataBaseDao dataBaseDao;
+	private ConcurrentLinkedQueue<String> con;
+	private ConcurrentLinkedQueue<String> consave;
+	int i=0;
+	@Override
+	public void run() {
+		dictionaryPool.initDictionaryPool();
+		ArrayList<String> list=null;
+		MqHelper mq=null;
+		MqHelper mq_gc=null;
+		String user="";
+		String pw="";
+		String url="";
+		try {
+//			WebApplicationContext  webApplicationContext = ContextLoader.getCurrentWebApplicationContext();//全局作用域变量
+			List list_mq = dataBaseDao.executeQuery("select * from SYS_CONFIG_PARAM");
+//			List list_mq_gc = dataBaseDao.executeQuery(Common.WEB_Param);
+			if(list_mq!=null && list_mq.size()>1){
+				for(int i=0;i<list_mq.size();i++){
+					Map mqMap = (Map)list_mq.get(i);//海信MQ
+					if("LOCAL_MQ_PASSWORD".equals(mqMap.get(Common.PARAMKEY).toString())){
+						user=mqMap.get(Common.PARAMVALUE).toString();
+					}
+					if("LOCAL_MQ_ACCOUNT".equals(mqMap.get(Common.PARAMKEY).toString())){
+						pw=mqMap.get(Common.PARAMVALUE).toString();
+					}
+					if("LOCAL_MQ_ADDR".equals(mqMap.get(Common.PARAMKEY).toString())){
+						url=mqMap.get(Common.PARAMVALUE).toString();
+					}
+				}
+			}
+			
+			con = new ConcurrentLinkedQueue<String>();
+			consave = new ConcurrentLinkedQueue<String>();
+			
+			Properties pro = Common.getProperties();
+			String MT_SEND = pro.getProperty("MT_SEND");
+			//发送消息
+			mq=new MqHelper(user,pw,url);
+			
+			pro = Common.getProperties();
+			String MT_GC = pro.getProperty("MT_GC");
+			//接收消息
+			TopicFactory topicFactory = new TopicFactory(user,pw,url);
+			MessageConsumer consumer = topicFactory.CreateConsumerReceive(MT_GC);	
+			
+			consumer.setMessageListener(new MessageListener() {
+		            public void onMessage(Message message) {
+		                try {
+		                	TextMessage textMessage = (TextMessage) message;
+							String jsonString2 = textMessage.getText();
+							Map map=(Map)JSONValue.parse(jsonString2);
+//		                    System.out.println("接收消息  = [" + ((TextMessage) message).getText() + "]");
+//		                    System.out.println(dictionaryPool);
+//		                    DCOLLECTIONDATE 采集时间
+//		                                             车牌号判断
+		                    String hphm=map.get("CCARNUMBER").toString();
+		                    String CARNO=dictionaryPool.getElementValue(dictionaryPool.BLACKLIST,"CARNO",hphm,"CARNO");
+		                    //点位判断
+		                    String devicecode=map.get("CDEVICECODE").toString();
+		                    String DEVICECODE=dictionaryPool.getElementValue(dictionaryPool.Black_alert_device,"DEVICECODE",devicecode,"DEVICECODE");
+		                    //点位名称
+		                    String DEVICENAME=dictionaryPool.getElementValue(dictionaryPool.Black_alert_device,"DEVICECODE",map.get("CDEVICECODE").toString(),"DEVICENAME");
+		                   
+		                    //布控类型  1
+		                    String CONTROLTYPE=dictionaryPool.getElementValue(dictionaryPool.BLACKLIST,"CARNO",map.get("CCARNUMBER").toString(),"CONTROLTYPE");
+		                    //布控类型 2
+		                    String bkl_bklx=dictionaryPool.getElementValue(dictionaryPool.bkl_bklx,"VALUE",CONTROLTYPE,"LABEL");
+		                    //布控级别 1
+		                    String CONTROLLEVEL=dictionaryPool.getElementValue(dictionaryPool.BLACKLIST,"CARNO",map.get("CCARNUMBER").toString(),"CONTROLLEVEL");
+		                    //布控级别 2
+		                    String bkl_bkjb=dictionaryPool.getElementValue(dictionaryPool.bkl_bkjb,"VALUE",CONTROLLEVEL,"LABEL");
+		                    //采集时间
+		                    String cjsj=map.get("DCOLLECTIONDATE").toString();
+		                    //方向
+		                    String com_cdfx=dictionaryPool.getElementValue(dictionaryPool.com_cdfx,"VALUE",map.get("CDIRECTION").toString(),"LABEL");
+		                    //车标
+		                    String com_cbbh=dictionaryPool.getElementValue(dictionaryPool.com_cbbh,"VALUE",map.get("CVEHLOGO").toString(),"LABEL");
+		                    //车辆类型
+		                    String com_cllx=dictionaryPool.getElementValue(dictionaryPool.com_cllx,"VALUE",map.get("cllxid").toString(),"LABEL");
+		                    //号牌类型
+		                    String com_hplx=dictionaryPool.getElementValue(dictionaryPool.com_hplx,"VALUE",map.get("CLICENSETYPE").toString(),"LABEL");
+		                    //车身颜色
+		                    String com_csys=dictionaryPool.getElementValue(dictionaryPool.com_csys,"VALUE",map.get("CVEHCOLOR").toString(),"LABEL");
+		                    //车道编号
+		                    String com_cdbh=dictionaryPool.getElementValue(dictionaryPool.com_cdbh,"VALUE",map.get("CLANENUMBER").toString(),"LABEL");
+		                    //图片
+		                    String CPIC1PATH=map.get("CPIC1PATH").toString();
+		                    //车速
+		                    String NVEHICLESPEED=map.get("NVEHICLESPEED").toString();
+		                    //数据来源
+		                    String eqp_type=dictionaryPool.getElementValue(dictionaryPool.eqp_type,"VALUE",map.get("CDATASOURCE").toString(),"LABEL");
+		                    
+		                    if((CARNO!=null&&CARNO!="null"&&CARNO!="")&&(DEVICECODE!=null&&DEVICECODE!="null"&&DEVICECODE!="")){
+		                    	Map mes=new HashMap();
+			                    mes.put("CARNO", CARNO);
+			                    mes.put("DEVICECODE", DEVICECODE);
+			                    mes.put("DEVICENAME", DEVICENAME);
+			                    mes.put("bkl_bklx", bkl_bklx);
+			                    mes.put("bkl_bkjb", bkl_bkjb);
+			                    mes.put("cjsj", cjsj);
+			                    mes.put("com_cdfx", com_cdfx);
+			                    mes.put("com_cbbh", com_cbbh);
+			                    mes.put("com_cllx", com_cllx);
+			                    mes.put("com_hplx", com_hplx);
+			                    mes.put("com_csys", com_csys);
+			                    mes.put("com_cdbh", com_cdbh);
+			                    mes.put("CPIC1PATH", CPIC1PATH);
+			                    mes.put("NVEHICLESPEED", NVEHICLESPEED);
+			                    String json = JSONValue.toJSONString(mes);
+			                    System.out.println(json);
+			                    con.add(json);
+			                    
+			                    
+			                    StringBuffer sql=new StringBuffer();
+			        			sql.append(" INSERT INTO  blacklist_alert ");
+			        			sql.append(" (ID,CREATE_BY,CREATE_DATE,UPDATE_BY,UPDATE_DATE,REMARKS,DEL_FLAG,BLACKLISTID,CARNO,CARTYPE,ADDRESSCODE,ADDRESSNAME,ALERTTIME,ALERTDEVCODE,DIRECTION,ALERTSTATUS,ALERTDESC,CONTROLTYPE,ZJTP) ");
+			        			sql.append(" values(SEQ_BLACK_ALERT.NEXTVAL,1, ");
+			        			sql.append(cjsj==null?"":"to_date('"+cjsj+"','yyyy-mm-dd hh24:mi:ss') ");
+			        			sql.append(" ,1,sysdate, ");
+			        			sql.append(" '',0, ");
+			        			sql.append(" '"+0+"', ");
+			        			sql.append(CARNO==null?"":"'"+CARNO+"' ");
+			        			sql.append(" ,1, ");
+			        			sql.append(" '120.389853,36.105891', ");
+			        			sql.append(DEVICENAME==null?"":"'"+DEVICENAME+"' ");sql.append(",");
+			        			sql.append(" sysdate, ");
+			        			sql.append(" '', ");
+			        			sql.append(com_cdfx==null?"":"'"+com_cdfx+"' ");sql.append(",");
+			        			sql.append(" '7', ");
+			        			sql.append(" '', ");
+			        			sql.append(" '', ");
+			        			sql.append(CPIC1PATH==null?"":"'"+CPIC1PATH+"' ");
+			        			sql.append(" ) ");
+			        			System.out.println(sql.toString());
+			        			consave.add(sql.toString());
+			        			
+			                    
+		                    }
+		                    
+		                    System.out.println(i++);
+		                    
+		                } catch (JMSException e) {
+		                    e.printStackTrace();
+		                }
+		            }
+		     });
+			while(true){
+				if(con.size()>0){
+					try {
+						String str=con.poll();
+						//System.out.println(str);
+						mq.sendTopicMessage(MT_SEND,str);
+						dataBaseDao.save(consave.poll());
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}finally {
+		}
+	}
+}
